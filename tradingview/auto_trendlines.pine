@@ -32,7 +32,7 @@ int    maxSpan    = input.int(300, "Max bars between anchors", minval = 10, maxv
 int    minTouches = input.int(2, "Min touches", minval = 2, maxval = 10, group = G_LINE, tooltip = "2 = the two anchor pivots. 3+ also requires other pivots sitting on the line.")
 string validSrc   = input.string("Close", "Line must not be crossed by", options = ["Close", "Wick"], group = G_LINE, tooltip = "Close: wicks may poke through the line before it is drawn. Wick: stricter, fewer lines.")
 float  tolMult    = input.float(0.1, "Touch tolerance (x ATR)", minval = 0, maxval = 2, step = 0.05, group = G_LINE)
-int    maxAge     = input.int(150, "Stop extending after (bars)", minval = 10, maxval = 1000, group = G_LINE, tooltip = "Bars after the second anchor before an unbroken line is frozen.")
+int    maxAge     = input.int(150, "Stop extending after (bars)", minval = 10, maxval = 1000, group = G_LINE, tooltip = "Bars after the second anchor before an unbroken line is removed.")
 int    maxActive  = input.int(3, "Active lines per side", minval = 1, maxval = 50, group = G_LINE, tooltip = "Per level: at most this many resistance lines and this many support lines. The oldest is removed.")
 
 float  breakBuf   = input.float(0.0, "Break buffer (x ATR)", minval = 0, maxval = 3, step = 0.05, group = G_BRK, tooltip = "A break needs a close this far beyond the line. 0 = any close beyond it.")
