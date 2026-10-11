@@ -73,13 +73,11 @@ method retire(Level this, TLine t, float y, bool broken) =>
     t.ln.set_color(color.new(t.isRes ? resColor : supColor, 50))
     if broken
         t.ln.set_style(line.style_dashed)
-    if this.done.size() > 0 and this.done.size() >= keepBroken
+    this.done.push(t.ln)
+    if this.done.size() > keepBroken
         line old = this.done.shift()
         old.delete()
-    if keepBroken > 0
-        this.done.push(t.ln)
-    else
-        t.ln.delete()
+    this.done.size()
 
 // Check every active line against this bar: breaks, expiry, extension.
 method updateLines(Level this, float atrV) =>
@@ -91,18 +89,15 @@ method updateLines(Level this, float atrV) =>
         for i = n - 1 to 0
             TLine t = this.active.get(i)
             float v = t.valueAt(bar_index)
-            if t.isRes and close > v + buf
-                bull := true
+            bool brokeUp = t.isRes and close > v + buf
+            bool brokeDn = not t.isRes and close < v - buf
+            bool ended   = brokeUp or brokeDn or bar_index - t.x2 > maxAge
+            bull := bull or brokeUp
+            bear := bear or brokeDn
+            if ended
                 this.active.remove(i)
-                this.retire(t, v, true)
-            else if not t.isRes and close < v - buf
-                bear := true
-                this.active.remove(i)
-                this.retire(t, v, true)
-            else if bar_index - t.x2 > maxAge
-                this.active.remove(i)
-                this.retire(t, v, false)
-            else
+                this.retire(t, v, brokeUp or brokeDn)
+            if not ended
                 int xe = bar_index + (barstate.islast ? projBars : 0)
                 t.ln.set_xy2(xe, t.valueAt(xe))
     [bull, bear]

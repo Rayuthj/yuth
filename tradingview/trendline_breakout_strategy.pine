@@ -28,7 +28,7 @@ int    maxAge     = input.int(150, "Stop extending after (bars)", minval = 10, m
 int    maxActive  = input.int(40, "Max active lines", minval = 5, maxval = 100, group = G_TL)
 float  breakBuf   = input.float(0.0, "Break buffer (x ATR)", minval = 0, maxval = 3, step = 0.05, group = G_TL)
 
-string side       = input.string("Both", "Direction", options = ["Both", "Long only", "Short only"], group = G_TRD)
+string tradeDir   = input.string("Both", "Direction", options = ["Both", "Long only", "Short only"], group = G_TRD)
 bool   useTrend   = input.bool(false, "Trend filter: only trade with the EMA", inline = "trend", group = G_TRD, tooltip = "Longs only above the EMA, shorts only below it. Helped long-only trading on stocks in the research.")
 int    trendLen   = input.int(200, "", minval = 10, maxval = 500, inline = "trend", group = G_TRD)
 
@@ -81,13 +81,11 @@ method retire(Level this, TLine t, float y, bool broken) =>
     t.ln.set_color(lineColor(t.isRes, 50))
     if broken
         t.ln.set_style(line.style_dashed)
-    if this.done.size() > 0 and this.done.size() >= keepBroken
+    this.done.push(t.ln)
+    if this.done.size() > keepBroken
         line old = this.done.shift()
         old.delete()
-    if keepBroken > 0
-        this.done.push(t.ln)
-    else
-        t.ln.delete()
+    this.done.size()
 
 // Check every active line against this bar: breaks, expiry, extension.
 method updateLines(Level this, float atrV) =>
@@ -99,18 +97,15 @@ method updateLines(Level this, float atrV) =>
         for i = n - 1 to 0
             TLine t = this.active.get(i)
             float v = t.valueAt(bar_index)
-            if t.isRes and close > v + buf
-                bull := true
+            bool brokeUp = t.isRes and close > v + buf
+            bool brokeDn = not t.isRes and close < v - buf
+            bool ended   = brokeUp or brokeDn or bar_index - t.x2 > maxAge
+            bull := bull or brokeUp
+            bear := bear or brokeDn
+            if ended
                 this.active.remove(i)
-                this.retire(t, v, true)
-            else if not t.isRes and close < v - buf
-                bear := true
-                this.active.remove(i)
-                this.retire(t, v, true)
-            else if bar_index - t.x2 > maxAge
-                this.active.remove(i)
-                this.retire(t, v, false)
-            else
+                this.retire(t, v, brokeUp or brokeDn)
+            if not ended
                 int xe = bar_index + (barstate.islast ? projBars : 0)
                 t.ln.set_xy2(xe, t.valueAt(xe))
     [bull, bear]
@@ -186,13 +181,13 @@ float pl   = ta.pivotlow(low, pivLen, pivLen)
 var Level lv = newLevel(pivLen, 2)
 [bullBreak, bearBreak] = lv.onBar(true, ph, pl, atrV)
 
-bool longSig  = bullBreak and side != "Short only" and (not useTrend or close > emaV)
-bool shortSig = bearBreak and side != "Long only" and (not useTrend or close < emaV)
+bool longSig  = bullBreak and tradeDir != "Short only" and (not useTrend or close > emaV)
+bool shortSig = bearBreak and tradeDir != "Long only" and (not useTrend or close < emaV)
 
 // ════════════════════════════════ Orders ════════════════════════════════
 // Size so that hitting the stop loses riskPct of equity, capped by maxPosPct.
-positionSize(float stopDist) =>
-    float riskQty = strategy.equity * riskPct / 100 / stopDist
+positionSize(float dist) =>
+    float riskQty = strategy.equity * riskPct / 100 / dist
     float capQty  = strategy.equity * maxPosPct / 100 / close
     math.max(math.min(riskQty, capQty), 0)
 
@@ -218,13 +213,12 @@ if goShort
     strategy.entry("Short", strategy.short, qty = positionSize(stopDist))
 
 // Trailing stop: ratchet behind the best price since entry (never loosens).
-if not useTarget and not flat
-    if strategy.position_size > 0
-        extreme := math.max(extreme, high)
-        stopPx  := math.max(stopPx, extreme - trailAtr * atrV)
-    else
-        extreme := math.min(extreme, low)
-        stopPx  := math.min(stopPx, extreme + trailAtr * atrV)
+if not useTarget and strategy.position_size > 0
+    extreme := math.max(extreme, high)
+    stopPx  := math.max(stopPx, extreme - trailAtr * atrV)
+if not useTarget and strategy.position_size < 0
+    extreme := math.min(extreme, low)
+    stopPx  := math.min(stopPx, extreme + trailAtr * atrV)
 
 if goLong or strategy.position_size > 0
     strategy.exit("Long exit", from_entry = "Long", stop = stopPx, limit = useTarget ? tpPx : na)
