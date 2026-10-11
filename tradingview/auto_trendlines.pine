@@ -1,0 +1,203 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+//@version=6
+indicator("Auto Trendlines - All Levels", shorttitle = "Auto Trendlines", overlay = true, max_lines_count = 500, max_bars_back = 2000)
+
+// How it works
+// 1. Pivot highs/lows are found on three levels (minor, intermediate, major).
+// 2. Every new pivot is connected to earlier pivots of the same kind (highs with highs,
+//    lows with lows). A candidate line is kept only if price never closed through it
+//    between its first anchor and the current bar, and it has enough touches.
+// 3. Valid lines are extended to the right until price closes through them (a break,
+//    marked with an arrow) or they get too old.
+
+// ════════════════════════════════ Inputs ════════════════════════════════
+G_LVL  = "Pivot levels (each draws its own trendlines)"
+G_LINE = "Trendline rules"
+G_BRK  = "Breaks"
+G_STY  = "Style"
+
+bool useMinor = input.bool(true, "Minor",        inline = "minor", group = G_LVL)
+int  lenMinor = input.int(5,     "pivot length", minval = 2, maxval = 50, inline = "minor", group = G_LVL)
+bool useInter = input.bool(true, "Intermediate", inline = "inter", group = G_LVL)
+int  lenInter = input.int(10,    "pivot length", minval = 2, maxval = 50, inline = "inter", group = G_LVL)
+bool useMajor = input.bool(true, "Major",        inline = "major", group = G_LVL)
+int  lenMajor = input.int(20,    "pivot length", minval = 2, maxval = 50, inline = "major", group = G_LVL)
+
+string lineMode   = input.string("All slopes", "Line types", options = ["All slopes", "Classic only"], group = G_LINE, tooltip = "Classic only: falling resistance (lower highs) and rising support (higher lows).\nAll slopes: also rising resistance and falling support (channel lines), drawn dotted.")
+int    maxConn    = input.int(3, "Lines per new pivot", minval = 1, maxval = 10, group = G_LINE, tooltip = "Each new pivot is connected to up to this many earlier pivots. Higher = more trendlines.")
+int    memory     = input.int(10, "Pivots remembered", minval = 2, maxval = 30, group = G_LINE, tooltip = "How many earlier pivots per level a new pivot can connect to.")
+int    maxSpan    = input.int(300, "Max bars between anchors", minval = 10, maxval = 1000, group = G_LINE)
+int    minTouches = input.int(2, "Min touches", minval = 2, maxval = 10, group = G_LINE, tooltip = "2 = the two anchor pivots. 3+ also requires other pivots sitting on the line.")
+string validSrc   = input.string("Close", "Line must not be crossed by", options = ["Close", "Wick"], group = G_LINE, tooltip = "Close: wicks may poke through the line before it is drawn. Wick: stricter, fewer lines.")
+float  tolMult    = input.float(0.1, "Touch tolerance (x ATR)", minval = 0, maxval = 2, step = 0.05, group = G_LINE)
+int    maxAge     = input.int(150, "Stop extending after (bars)", minval = 10, maxval = 1000, group = G_LINE, tooltip = "Bars after the second anchor before an unbroken line is frozen.")
+int    maxActive  = input.int(40, "Max active lines per level", minval = 5, maxval = 100, group = G_LINE)
+
+float  breakBuf   = input.float(0.0, "Break buffer (x ATR)", minval = 0, maxval = 3, step = 0.05, group = G_BRK, tooltip = "A break needs a close this far beyond the line. 0 = any close beyond it.")
+bool   showBreaks = input.bool(true, "Show break arrows", group = G_BRK)
+int    keepBroken = input.int(20, "Old lines kept per level", minval = 0, maxval = 100, group = G_BRK, tooltip = "Broken (dashed) and expired lines to keep on the chart.")
+
+color  resColor   = input.color(#ef5350, "Resistance", inline = "col", group = G_STY)
+color  supColor   = input.color(#26a69a, "Support",    inline = "col", group = G_STY)
+int    projBars   = input.int(20, "Project active lines (bars)", minval = 0, maxval = 200, group = G_STY)
+
+// ═════════════════════════════ Trendline engine ═════════════════════════════
+type TLine
+    int   x1
+    float y1
+    int   x2
+    float slope
+    int   touches
+    bool  isRes
+    line  ln
+
+type Level
+    int          len
+    int          width
+    array<int>   phX
+    array<float> phY
+    array<int>   plX
+    array<float> plY
+    array<TLine> active
+    array<line>  done
+
+newLevel(int len, int width) =>
+    Level.new(len, width, array.new<int>(), array.new<float>(), array.new<int>(), array.new<float>(), array.new<TLine>(), array.new<line>())
+
+method valueAt(TLine this, int x) =>
+    this.y1 + this.slope * (x - this.x1)
+
+// Freeze a line at the current bar and move it to the history list.
+method retire(Level this, TLine t, float y, bool broken) =>
+    t.ln.set_xy2(bar_index, y)
+    t.ln.set_color(color.new(t.isRes ? resColor : supColor, 50))
+    if broken
+        t.ln.set_style(line.style_dashed)
+    if this.done.size() > 0 and this.done.size() >= keepBroken
+        line old = this.done.shift()
+        old.delete()
+    if keepBroken > 0
+        this.done.push(t.ln)
+    else
+        t.ln.delete()
+
+// Check every active line against this bar: breaks, expiry, extension.
+method updateLines(Level this, float atrV) =>
+    bool bull = false
+    bool bear = false
+    float buf = breakBuf * atrV
+    int n = this.active.size()
+    if n > 0
+        for i = n - 1 to 0
+            TLine t = this.active.get(i)
+            float v = t.valueAt(bar_index)
+            if t.isRes and close > v + buf
+                bull := true
+                this.active.remove(i)
+                this.retire(t, v, true)
+            else if not t.isRes and close < v - buf
+                bear := true
+                this.active.remove(i)
+                this.retire(t, v, true)
+            else if bar_index - t.x2 > maxAge
+                this.active.remove(i)
+                this.retire(t, v, false)
+            else
+                int xe = bar_index + (barstate.islast ? projBars : 0)
+                t.ln.set_xy2(xe, t.valueAt(xe))
+    [bull, bear]
+
+// Connect a newly confirmed pivot (bar xb, price yb) to earlier pivots of the same kind.
+method addPivot(Level this, bool isRes, int xb, float yb, float atrV) =>
+    array<int>   xs = isRes ? this.phX : this.plX
+    array<float> ys = isRes ? this.phY : this.plY
+    float tol = tolMult * atrV
+    bool useWick = validSrc == "Wick"
+    int made = 0
+    int n = xs.size()
+    if n > 0
+        for j = n - 1 to 0
+            int   xa = xs.get(j)
+            float ya = ys.get(j)
+            if made >= maxConn or xb - xa > maxSpan
+                break
+            bool classic = isRes ? ya > yb : ya < yb
+            if lineMode == "Classic only" and not classic
+                continue
+            float slope = (yb - ya) / (xb - xa)
+            // price must not have closed (or wicked) through the line since its first anchor
+            bool valid = true
+            for x = xa + 1 to bar_index
+                int   off = bar_index - x
+                float lv  = ya + slope * (x - xa)
+                float px  = isRes ? (useWick ? high[off] : close[off]) : (useWick ? low[off] : close[off])
+                if (isRes ? px > lv + tol : px < lv - tol)
+                    valid := false
+                    break
+            if valid
+                int touches = 2
+                if j < n - 1
+                    for k = j + 1 to n - 1
+                        if math.abs(ys.get(k) - (ya + slope * (xs.get(k) - xa))) <= tol
+                            touches += 1
+                if touches >= minTouches
+                    int  xe = bar_index + (barstate.islast ? projBars : 0)
+                    line ln = line.new(xa, ya, xe, ya + slope * (xe - xa), color = isRes ? resColor : supColor, width = this.width, style = classic ? line.style_solid : line.style_dotted)
+                    this.active.push(TLine.new(xa, ya, xb, slope, touches, isRes, ln))
+                    made += 1
+                    if this.active.size() > maxActive
+                        TLine old = this.active.shift()
+                        old.ln.delete()
+    xs.push(xb)
+    ys.push(yb)
+    if xs.size() > memory
+        xs.shift()
+        ys.shift()
+    made
+
+// Run one level for the current bar. Called on every bar so history stays consistent.
+method onBar(Level this, bool enabled, float ph, float pl, float atrV) =>
+    bool bull = false
+    bool bear = false
+    if enabled and not na(atrV)
+        [b, s] = this.updateLines(atrV)
+        bull := b
+        bear := s
+        if not na(ph)
+            this.addPivot(true, bar_index - this.len, ph, atrV)
+        if not na(pl)
+            this.addPivot(false, bar_index - this.len, pl, atrV)
+    [bull, bear]
+
+// ════════════════════════════════ Main ════════════════════════════════
+float atrV    = ta.atr(14)
+float phMinor = ta.pivothigh(high, lenMinor, lenMinor)
+float plMinor = ta.pivotlow(low, lenMinor, lenMinor)
+float phInter = ta.pivothigh(high, lenInter, lenInter)
+float plInter = ta.pivotlow(low, lenInter, lenInter)
+float phMajor = ta.pivothigh(high, lenMajor, lenMajor)
+float plMajor = ta.pivotlow(low, lenMajor, lenMajor)
+
+var Level lvMinor = newLevel(lenMinor, 1)
+var Level lvInter = newLevel(lenInter, 2)
+var Level lvMajor = newLevel(lenMajor, 3)
+
+[bullMinor, bearMinor] = lvMinor.onBar(useMinor, phMinor, plMinor, atrV)
+[bullInter, bearInter] = lvInter.onBar(useInter, phInter, plInter, atrV)
+[bullMajor, bearMajor] = lvMajor.onBar(useMajor, phMajor, plMajor, atrV)
+
+bool bullBreak = bullMinor or bullInter or bullMajor
+bool bearBreak = bearMinor or bearInter or bearMajor
+
+// Arrow size shows the biggest level that broke on that bar.
+plotshape(showBreaks and bullMinor and not bullInter and not bullMajor, "Bull break (minor)", shape.triangleup, location.belowbar, supColor, size = size.tiny)
+plotshape(showBreaks and bullInter and not bullMajor, "Bull break (intermediate)", shape.triangleup, location.belowbar, supColor, size = size.small)
+plotshape(showBreaks and bullMajor, "Bull break (major)", shape.triangleup, location.belowbar, supColor, size = size.normal)
+plotshape(showBreaks and bearMinor and not bearInter and not bearMajor, "Bear break (minor)", shape.triangledown, location.abovebar, resColor, size = size.tiny)
+plotshape(showBreaks and bearInter and not bearMajor, "Bear break (intermediate)", shape.triangledown, location.abovebar, resColor, size = size.small)
+plotshape(showBreaks and bearMajor, "Bear break (major)", shape.triangledown, location.abovebar, resColor, size = size.normal)
+
+alertcondition(bullBreak, "Bullish trendline break", "{{ticker}} {{interval}}: closed above a resistance trendline at {{close}}")
+alertcondition(bearBreak, "Bearish trendline break", "{{ticker}} {{interval}}: closed below a support trendline at {{close}}")
+alertcondition(bullMajor or bearMajor, "Major trendline break", "{{ticker}} {{interval}}: major trendline broken at {{close}}")
+alertcondition(bullBreak or bearBreak, "Any trendline break", "{{ticker}} {{interval}}: trendline broken at {{close}}")
