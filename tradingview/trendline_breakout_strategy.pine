@@ -25,7 +25,7 @@ int    maxSpan    = input.int(300, "Max bars between anchors", minval = 10, maxv
 string validSrc   = input.string("Close", "Line must not be crossed by", options = ["Close", "Wick"], group = G_TL)
 float  tolMult    = input.float(0.1, "Touch tolerance (x ATR)", minval = 0, maxval = 2, step = 0.05, group = G_TL)
 int    maxAge     = input.int(150, "Stop extending after (bars)", minval = 10, maxval = 1000, group = G_TL)
-int    maxActive  = input.int(40, "Max active lines", minval = 5, maxval = 100, group = G_TL)
+int    maxActive  = input.int(40, "Active lines per side", minval = 1, maxval = 100, group = G_TL, tooltip = "At most this many resistance lines and this many support lines are watched. The oldest is removed.")
 float  breakBuf   = input.float(0.0, "Break buffer (x ATR)", minval = 0, maxval = 3, step = 0.05, group = G_TL)
 
 string tradeDir   = input.string("Both", "Direction", options = ["Both", "Long only", "Short only"], group = G_TRD)
@@ -43,7 +43,7 @@ float  maxPosPct  = input.float(100, "Max position value (% of equity)", minval 
 bool   showLines  = input.bool(true, "Show trendlines", group = G_STY)
 color  resColor   = input.color(#ef5350, "Resistance", inline = "col", group = G_STY)
 color  supColor   = input.color(#26a69a, "Support",    inline = "col", group = G_STY)
-int    keepBroken = input.int(20, "Old lines kept", minval = 0, maxval = 100, group = G_STY)
+int    keepBroken = input.int(5, "Broken lines kept", minval = 0, maxval = 100, group = G_STY)
 int    projBars   = 20
 
 // ═════════════════════════════ Trendline engine ═════════════════════════════
@@ -75,17 +75,33 @@ lineColor(bool isRes, int transp) =>
 method valueAt(TLine this, int x) =>
     this.y1 + this.slope * (x - this.x1)
 
-// Freeze a line at the current bar and move it to the history list.
+// A broken line is frozen at the break (dashed, faded) and kept in the history list.
+// A line that simply got too old is deleted.
 method retire(Level this, TLine t, float y, bool broken) =>
-    t.ln.set_xy2(bar_index, y)
-    t.ln.set_color(lineColor(t.isRes, 50))
     if broken
+        t.ln.set_xy2(bar_index, y)
+        t.ln.set_color(lineColor(t.isRes, 60))
         t.ln.set_style(line.style_dashed)
-    this.done.push(t.ln)
+        this.done.push(t.ln)
+    if not broken
+        t.ln.delete()
     if this.done.size() > keepBroken
         line old = this.done.shift()
         old.delete()
     this.done.size()
+
+// Keep at most maxActive active lines of one kind (resistance or support); drop the oldest.
+method trim(Level this, bool isRes) =>
+    int cnt = 0
+    int oldest = -1
+    for idx = this.active.size() - 1 to 0
+        if this.active.get(idx).isRes == isRes
+            cnt += 1
+            oldest := idx
+    if cnt > maxActive
+        TLine o = this.active.remove(oldest)
+        o.ln.delete()
+    cnt
 
 // Check every active line against this bar: breaks, expiry, extension.
 method updateLines(Level this, float atrV) =>
@@ -148,9 +164,7 @@ method addPivot(Level this, bool isRes, int xb, float yb, float atrV) =>
                     line ln = line.new(xa, ya, xe, ya + slope * (xe - xa), color = lineColor(isRes, 0), width = this.width, style = classic ? line.style_solid : line.style_dotted)
                     this.active.push(TLine.new(xa, ya, xb, slope, touches, isRes, ln))
                     made += 1
-                    if this.active.size() > maxActive
-                        TLine old = this.active.shift()
-                        old.ln.delete()
+                    this.trim(isRes)
     xs.push(xb)
     ys.push(yb)
     if xs.size() > memory

@@ -18,23 +18,37 @@ Two Pine Script v6 scripts for TradingView:
 
 How lines are built:
 
-1. Pivot highs and lows are found on 3 levels: minor (pivot length 5, thin), intermediate (10, medium), and major (20, thick).
-2. Each new pivot is connected to up to 3 earlier pivots of the same kind (highs to highs, lows to lows).
+1. Pivot highs and lows are found on up to 3 levels: minor (pivot length 5, thin), intermediate (10, medium), and major (20, thick).
+   Minor is off by default.
+2. Each new pivot is connected to an earlier pivot of the same kind (highs to highs, lows to lows).
 3. A line is kept only if no candle **closed** through it between its first anchor and now.
-4. Valid lines extend to the right until price closes through them. A break is marked with an arrow (bigger arrow = bigger level), and the broken line turns dashed.
+4. Valid lines extend to the right until price closes through them.
+   A break is marked with an arrow (bigger arrow = bigger level), and the broken line turns dashed.
 
 Line colors: red is resistance (through highs) and green is support (through lows).
-Solid lines are classic trendlines: falling resistance and rising support.
-Dotted lines are channel lines (rising resistance, falling support), shown when **Line types = All slopes**.
 
-Settings to adjust:
+The defaults are set for a clean chart:
 
-- **Lines per new pivot / Pivots remembered**: raise these for more lines, lower them for a cleaner chart.
-- **Line types**: switch to *Classic only* to see only textbook trendlines.
+- classic trendlines only (falling resistance, rising support)
+- 1 line per new pivot
+- at most 3 resistance and 3 support lines per level
+- 3 broken lines kept per level
+
+**Want more lines?** Change these settings:
+
+| Setting | Clean (default) | More lines |
+|---|---|---|
+| Minor (pivot level) | off | on |
+| Line types | Classic only | All slopes (adds dotted channel lines) |
+| Lines per new pivot | 1 | 2–3 |
+| Active lines per side | 3 | 10+ |
+| Broken lines kept per level | 3 | 10+ (0 hides broken lines) |
+
+Other settings:
+
 - **Min touches**: 3 keeps only lines with at least one more pivot on them (stronger, fewer lines).
 - **Line must not be crossed by**: *Wick* is stricter than *Close*.
 - **Break buffer (x ATR)**: require a close this far past the line to count a break (filters small fake-outs).
-- Turn off levels you don't need (e.g. Minor on low timeframes).
 
 ## Trendline Breakout strategy
 

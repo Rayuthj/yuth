@@ -172,8 +172,9 @@ def detect_events(d, piv=5, mode="all", wick=False, tol=0.1, max_conn=3,
                     continue
                 active.append(Line(xa, ya, slope, xb, touches, is_res))
                 made += 1
-                if len(active) > max_active:  # same cap as the Pine scripts
-                    active.pop(0)
+                same = [k for k, a_ln in enumerate(active) if a_ln.is_res == is_res]
+                if len(same) > max_active:  # same per-side cap as the Pine scripts
+                    active.pop(same[0])
             store.append((xb, yb))
             if len(store) > memory:
                 store.pop(0)

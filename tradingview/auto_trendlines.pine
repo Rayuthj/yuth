@@ -9,6 +9,8 @@ indicator("Auto Trendlines - All Levels", shorttitle = "Auto Trendlines", overla
 //    between its first anchor and the current bar, and it has enough touches.
 // 3. Valid lines are extended to the right until price closes through them (a break,
 //    marked with an arrow) or they get too old.
+// Defaults are tuned for a clean chart. For more lines: turn on Minor, set Line types to
+// "All slopes", and raise "Lines per new pivot" and "Active lines per side".
 
 // ════════════════════════════════ Inputs ════════════════════════════════
 G_LVL  = "Pivot levels (each draws its own trendlines)"
@@ -16,26 +18,26 @@ G_LINE = "Trendline rules"
 G_BRK  = "Breaks"
 G_STY  = "Style"
 
-bool useMinor = input.bool(true, "Minor",        inline = "minor", group = G_LVL)
+bool useMinor = input.bool(false, "Minor",        inline = "minor", group = G_LVL)
 int  lenMinor = input.int(5,     "pivot length", minval = 2, maxval = 50, inline = "minor", group = G_LVL)
 bool useInter = input.bool(true, "Intermediate", inline = "inter", group = G_LVL)
 int  lenInter = input.int(10,    "pivot length", minval = 2, maxval = 50, inline = "inter", group = G_LVL)
 bool useMajor = input.bool(true, "Major",        inline = "major", group = G_LVL)
 int  lenMajor = input.int(20,    "pivot length", minval = 2, maxval = 50, inline = "major", group = G_LVL)
 
-string lineMode   = input.string("All slopes", "Line types", options = ["All slopes", "Classic only"], group = G_LINE, tooltip = "Classic only: falling resistance (lower highs) and rising support (higher lows).\nAll slopes: also rising resistance and falling support (channel lines), drawn dotted.")
-int    maxConn    = input.int(3, "Lines per new pivot", minval = 1, maxval = 10, group = G_LINE, tooltip = "Each new pivot is connected to up to this many earlier pivots. Higher = more trendlines.")
+string lineMode   = input.string("Classic only", "Line types", options = ["Classic only", "All slopes"], group = G_LINE, tooltip = "Classic only: falling resistance (lower highs) and rising support (higher lows).\nAll slopes: also rising resistance and falling support (channel lines), drawn dotted.")
+int    maxConn    = input.int(1, "Lines per new pivot", minval = 1, maxval = 10, group = G_LINE, tooltip = "Each new pivot is connected to up to this many earlier pivots. Higher = more trendlines.")
 int    memory     = input.int(10, "Pivots remembered", minval = 2, maxval = 30, group = G_LINE, tooltip = "How many earlier pivots per level a new pivot can connect to.")
 int    maxSpan    = input.int(300, "Max bars between anchors", minval = 10, maxval = 1000, group = G_LINE)
 int    minTouches = input.int(2, "Min touches", minval = 2, maxval = 10, group = G_LINE, tooltip = "2 = the two anchor pivots. 3+ also requires other pivots sitting on the line.")
 string validSrc   = input.string("Close", "Line must not be crossed by", options = ["Close", "Wick"], group = G_LINE, tooltip = "Close: wicks may poke through the line before it is drawn. Wick: stricter, fewer lines.")
 float  tolMult    = input.float(0.1, "Touch tolerance (x ATR)", minval = 0, maxval = 2, step = 0.05, group = G_LINE)
 int    maxAge     = input.int(150, "Stop extending after (bars)", minval = 10, maxval = 1000, group = G_LINE, tooltip = "Bars after the second anchor before an unbroken line is frozen.")
-int    maxActive  = input.int(40, "Max active lines per level", minval = 5, maxval = 100, group = G_LINE)
+int    maxActive  = input.int(3, "Active lines per side", minval = 1, maxval = 50, group = G_LINE, tooltip = "Per level: at most this many resistance lines and this many support lines. The oldest is removed.")
 
 float  breakBuf   = input.float(0.0, "Break buffer (x ATR)", minval = 0, maxval = 3, step = 0.05, group = G_BRK, tooltip = "A break needs a close this far beyond the line. 0 = any close beyond it.")
 bool   showBreaks = input.bool(true, "Show break arrows", group = G_BRK)
-int    keepBroken = input.int(20, "Old lines kept per level", minval = 0, maxval = 100, group = G_BRK, tooltip = "Broken (dashed) and expired lines to keep on the chart.")
+int    keepBroken = input.int(3, "Broken lines kept per level", minval = 0, maxval = 100, group = G_BRK, tooltip = "Broken lines (dashed) left on the chart per level. 0 = remove a line as soon as it breaks.")
 
 color  resColor   = input.color(#ef5350, "Resistance", inline = "col", group = G_STY)
 color  supColor   = input.color(#26a69a, "Support",    inline = "col", group = G_STY)
@@ -67,17 +69,33 @@ newLevel(int len, int width) =>
 method valueAt(TLine this, int x) =>
     this.y1 + this.slope * (x - this.x1)
 
-// Freeze a line at the current bar and move it to the history list.
+// A broken line is frozen at the break (dashed, faded) and kept in the history list.
+// A line that simply got too old is deleted.
 method retire(Level this, TLine t, float y, bool broken) =>
-    t.ln.set_xy2(bar_index, y)
-    t.ln.set_color(color.new(t.isRes ? resColor : supColor, 50))
     if broken
+        t.ln.set_xy2(bar_index, y)
+        t.ln.set_color(color.new(t.isRes ? resColor : supColor, 60))
         t.ln.set_style(line.style_dashed)
-    this.done.push(t.ln)
+        this.done.push(t.ln)
+    if not broken
+        t.ln.delete()
     if this.done.size() > keepBroken
         line old = this.done.shift()
         old.delete()
     this.done.size()
+
+// Keep at most maxActive active lines of one kind (resistance or support); drop the oldest.
+method trim(Level this, bool isRes) =>
+    int cnt = 0
+    int oldest = -1
+    for idx = this.active.size() - 1 to 0
+        if this.active.get(idx).isRes == isRes
+            cnt += 1
+            oldest := idx
+    if cnt > maxActive
+        TLine o = this.active.remove(oldest)
+        o.ln.delete()
+    cnt
 
 // Check every active line against this bar: breaks, expiry, extension.
 method updateLines(Level this, float atrV) =>
@@ -140,9 +158,7 @@ method addPivot(Level this, bool isRes, int xb, float yb, float atrV) =>
                     line ln = line.new(xa, ya, xe, ya + slope * (xe - xa), color = isRes ? resColor : supColor, width = this.width, style = classic ? line.style_solid : line.style_dotted)
                     this.active.push(TLine.new(xa, ya, xb, slope, touches, isRes, ln))
                     made += 1
-                    if this.active.size() > maxActive
-                        TLine old = this.active.shift()
-                        old.ln.delete()
+                    this.trim(isRes)
     xs.push(xb)
     ys.push(yb)
     if xs.size() > memory
@@ -186,11 +202,11 @@ bool bearBreak = bearMinor or bearInter or bearMajor
 
 // Arrow size shows the biggest level that broke on that bar.
 plotshape(showBreaks and bullMinor and not bullInter and not bullMajor, "Bull break (minor)", shape.triangleup, location.belowbar, supColor, size = size.tiny)
-plotshape(showBreaks and bullInter and not bullMajor, "Bull break (intermediate)", shape.triangleup, location.belowbar, supColor, size = size.small)
-plotshape(showBreaks and bullMajor, "Bull break (major)", shape.triangleup, location.belowbar, supColor, size = size.normal)
+plotshape(showBreaks and bullInter and not bullMajor, "Bull break (intermediate)", shape.triangleup, location.belowbar, supColor, size = size.tiny)
+plotshape(showBreaks and bullMajor, "Bull break (major)", shape.triangleup, location.belowbar, supColor, size = size.small)
 plotshape(showBreaks and bearMinor and not bearInter and not bearMajor, "Bear break (minor)", shape.triangledown, location.abovebar, resColor, size = size.tiny)
-plotshape(showBreaks and bearInter and not bearMajor, "Bear break (intermediate)", shape.triangledown, location.abovebar, resColor, size = size.small)
-plotshape(showBreaks and bearMajor, "Bear break (major)", shape.triangledown, location.abovebar, resColor, size = size.normal)
+plotshape(showBreaks and bearInter and not bearMajor, "Bear break (intermediate)", shape.triangledown, location.abovebar, resColor, size = size.tiny)
+plotshape(showBreaks and bearMajor, "Bear break (major)", shape.triangledown, location.abovebar, resColor, size = size.small)
 
 alertcondition(bullBreak, "Bullish trendline break", "{{ticker}} {{interval}}: closed above a resistance trendline at {{close}}")
 alertcondition(bearBreak, "Bearish trendline break", "{{ticker}} {{interval}}: closed below a support trendline at {{close}}")
