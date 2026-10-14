@@ -221,7 +221,9 @@ def plot(res, s, path, title):
     ax3.set_ylim(min(0, min(vals, default=0)) - pad, max(0, max(vals, default=0)) + pad)
     ax3.set_xlim(-0.75, max(len(years), 3) - 0.25)
 
-    fig.text(0.125, 0.015, ("Real Dukascopy XAUUSD ticks, every tick replayed. Bars from Bid. Real spread; "
+    fixed = s["settings"].get("fixed_spread")
+    spread = f"Fixed spread {fixed:.2f} USD (Ask = Bid + spread)" if fixed else "Real spread"
+    fig.text(0.125, 0.015, (f"Real Dukascopy XAUUSD ticks, every tick replayed. Bars from Bid. {spread}; "
                             "no commission or swap. $10,000 deposit, 1:100 leverage, 100 oz/lot."),
              color=muted, fontsize=8.5)
     fig.savefig(path, dpi=140, facecolor=surface, bbox_inches="tight")
@@ -235,10 +237,16 @@ def main():
     ap.add_argument("--warmup", required=True, type=dt.date.fromisoformat)
     ap.add_argument("--start", required=True, type=dt.date.fromisoformat)
     ap.add_argument("--end", required=True, type=dt.date.fromisoformat)
+    ap.add_argument("--spread-points", type=int, default=None,
+                    help="fixed spread in MT5 points instead of the real tick spread")
+    ap.add_argument("--point", type=float, default=0.01, help="MT5 point size (0.01 for 2-digit gold)")
     args = ap.parse_args()
 
     p = dict(DEFAULTS)
     t, bid, ask = load_ticks(args.data_dir, "XAUUSD", args.warmup, args.end)
+    if args.spread_points is not None:
+        p["fixed_spread"] = round(args.spread_points * args.point, 6)
+        ask = bid + p["fixed_spread"]
     start_ms, end_ms = to_ms(args.start), to_ms(args.end)
     n_ticks = int(((t >= start_ms) & (t < end_ms)).sum())
     print(f"loaded {len(t):,} ticks ({n_ticks:,} in the test window)", flush=True)
