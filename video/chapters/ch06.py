@@ -75,12 +75,12 @@ def build(tl):
         k = ease(prog(T, t_dark - 0.3, 1.2))
         bg = lerpc((0.93, 0.92, 0.89), ROOM, k)
         fill_bg(cr, bg)
-        rect(cr, 0, 880, W, 200, fill=lerpc((0.82, 0.78, 0.72), (0.07, 0.07, 0.10), k))
         ink = lerpc(INK, PALE, k)
-        line(cr, 0, 880, W, 880, 4, ink)
-        if k > 0:
-            glow(cr, 960, 500, 650, LAMP, 0.28 * k)
         with ken(cr, t, d, 1.0, 1.08, CX, 600):
+            rect(cr, -300, 880, W + 600, 500, fill=lerpc((0.82, 0.78, 0.72), (0.07, 0.07, 0.10), k))
+            line(cr, -300, 880, W + 300, 880, 4, ink)
+            if k > 0:
+                glow(cr, 960, 500, 650, LAMP, 0.28 * k)
             lamp(cr, 960, 380, k)
             P.desk(cr, 960, 880, 520)
             if k < 0.5:
@@ -232,8 +232,8 @@ def build(tl):
 
     @b.shot(st6, "fade", 0.4)
     def alien(cr, t, d, T):
-        dark_room(cr, T, 960, 200)
         with ken(cr, t, d, 1.0, 1.05):
+            dark_room(cr, T, 960, 200)
             p = sm.pose("present", x=560, face=1, smile=0.7, mo=0.3)
             p = sm.talk(sm.idle(p, T, 4), T, None, 0.8)
             if T > t_alien:
@@ -272,8 +272,8 @@ def build(tl):
 
     @b.shot(st7, "fade", 0.4)
     def perfect(cr, t, d, T):
-        dark_room(cr, T, 960, 200)
         with ken(cr, t, d, 1.0, 1.06):
+            dark_room(cr, T, 960, 200)
             rrect(cr, 560, 260, 800, 120, 20, fill=(0.2, 0.2, 0.25), stroke=PALE, lw=5)
             k = ease(prog(t, 0.3, 1.4))
             rrect(cr, 575, 275, 770 * 0.99 * k, 90, 14, fill=GREEN)
@@ -284,8 +284,8 @@ def build(tl):
             sm.hero(cr, p, ink=PALE, fill=NFILL)
             # rising bar of expectations
             by = lerp(700, 620, ease(prog(T, t_perf, 1.5))) - 10 * math.sin(T * 2)
-            line(cr, 1240, by - 120, 1560, by - 120, 8, RED, 0.7)
-            text(cr, "MY STANDARD", 1580, by - 120, 30, face=FONT_HAND, bold=True, c=RED, align="left")
+            line(cr, 1240, by - 175, 1560, by - 175, 8, RED, 0.7)
+            text(cr, "MY STANDARD", 1580, by - 175, 30, face=FONT_HAND, bold=True, c=RED, align="left")
         vignette(cr, 0.5)
 
     b.fx(st7 + 0.3, "rise", -12)

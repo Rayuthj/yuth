@@ -353,11 +353,11 @@ def build(tl):
     @b.shot(st10, "fade", 0.3)
     def knock(cr, t, d, T):
         paper(cr, (0.93, 0.92, 0.89))
-        rect(cr, 0, 900, W, 180, fill=(0.82, 0.78, 0.72))
-        ground(cr, 900)
         op = ease(prog(T, t_open, 0.5))
         shk = sum(max(0, 1 - abs(T - (t_knock + i * 0.28)) * 8) for i in range(3))
         with ken(cr, t, d, 1.0, 1.06, 1100, 560):
+            rect(cr, -300, 900, W + 600, 480, fill=(0.82, 0.78, 0.72))
+            ground(cr, 900, x0=-300, x1=W + 300)
             if op > 0:
                 reality(cr, 1250, 900, T, op)
             P.door(cr, 1250 + math.sin(T * 80) * 4 * shk, 900, 1.3, open_=op, light=(1.0, 0.95, 0.8))
@@ -434,8 +434,8 @@ def build(tl):
     @b.shot(st12, "fade", 0.35)
     def join(cr, t, d, T):
         paper(cr, (0.96, 0.95, 0.91))
-        ground(cr, 900)
         with ken(cr, t, d, 1.05, 1.0, CX, 600):
+            ground(cr, 900, x0=-300, x1=W + 300)
             for i, (lab, word, acc, x) in enumerate(team):
                 tj = w("c5_12", word) - 0.6
                 k = ease(prog(T, tj, 0.9))

@@ -305,8 +305,8 @@ def build(tl):
     @b.shot(st10, "fade", 0.35)
     def team(cr, t, d, T):
         paper(cr, (0.97, 0.95, 0.90))
-        ground(cr, 920)
         with ken(cr, t, d, 1.0, 1.04):
+            ground(cr, 920, x0=-300, x1=W + 300)
             kl = back(prog(T, t_listen, 0.4))
             ka = back(prog(T, t_ask, 0.4))
             k_work = ease(prog(T, t_work, 0.8))

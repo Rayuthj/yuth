@@ -378,8 +378,8 @@ def build(tl):
         vgrad(cr, (0.75, 0.88, 0.98), (0.92, 0.97, 0.92))
         P.cloud(cr, 400, 170, 1.0)
         P.cloud(cr, 1500, 130, 0.8)
-        rect(cr, 0, 860, W, 220, fill=(0.62, 0.80, 0.50))
-        ground(cr, 860)
+        rect(cr, -300, 860, W + 600, 520, fill=(0.62, 0.80, 0.50))
+        ground(cr, 860, x0=-300, x1=W + 300)
         P.tree(cr, 220, 860, 1.4, T)
         P.tree(cr, 1750, 860, 1.2, T + 1)
         rect(cr, 640, 740, 640, 22, fill=(0.6, 0.42, 0.28), stroke=INK, lw=5)
@@ -389,8 +389,8 @@ def build(tl):
 
     @b.shot(st9, "fade", 0.4)
     def friends(cr, t, d, T):
-        park(cr, T)
         with ken(cr, t, d, 1.0, 1.08, CX, 600):
+            park(cr, T)
             fx_ = lerp(1700, 1080, ease(prog(t, 0, 1.4)))
             arrive = prog(t, 0, 1.4)
             fp = sm.walk(sm.pose(x=fx_, face=-1, smile=0.6), T, 1.0) if arrive < 1 else sm.pose("sit", x=1080, face=-1)
