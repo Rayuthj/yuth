@@ -1,0 +1,170 @@
+{
+  "title": "What If You Lived for 1 Trillion Years?",
+  "voice": "am_michael",
+  "scenes": [
+    {
+      "id": "intro",
+      "age": [0, 0],
+      "lines": [
+        {"text": "Imagine you could never die."},
+        {"text": "Not in a hundred years. Not in a thousand. Not even in a million."},
+        {"text": "You are going to live for one trillion years."},
+        {"text": "That's a one, followed by twelve zeros.", "card": "1,000,000,000,000"},
+        {"text": "The universe itself is only 13.8 billion years old. You would live through its entire history more than seventy-two times.", "say": "The universe itself is only thirteen point eight billion years old. You would live through its entire history more than seventy-two times."},
+        {"text": "So what would you actually see? And what would happen to you?"}
+      ]
+    },
+    {
+      "id": "scale",
+      "age": [0, 0],
+      "lines": [
+        {"text": "First, let's try to feel how big this number really is."},
+        {"text": "If you counted one number every second, without ever sleeping, it would take you more than 31,000 years just to count to a trillion.", "say": "If you counted one number every second, without ever sleeping, it would take you more than thirty-one thousand years just to count to a trillion.", "card": "31,700 years|just to count to one trillion"},
+        {"text": "Now imagine squeezing your trillion-year life into a normal eighty-year lifetime."},
+        {"text": "On that scale, all ten thousand years of human civilization would flash by in about twenty-five seconds.", "card": "≈ 25 seconds|all of human civilization"},
+        {"text": "The entire history of the universe, from the Big Bang until today, would last just over a year.", "card": "≈ 1 year|the whole history of the universe"},
+        {"text": "Over your lifetime, your heart would beat almost 37 quintillion times, and you would spend more than 300 billion years asleep.", "say": "Over your lifetime, your heart would beat almost thirty-seven quintillion times, and you would spend more than three hundred billion years asleep.", "card": "37,000,000,000,000,000,000|heartbeats"}
+      ]
+    },
+    {
+      "id": "century",
+      "age": [25, 10000],
+      "lines": [
+        {"text": "Your first century feels almost normal."},
+        {"text": "Friends grow old. Cities rise. Technology changes in ways you can barely keep up with."},
+        {"text": "But by the time you are a thousand years old, everyone you have ever known is gone."},
+        {"text": "The language you grew up speaking now sounds as strange as Old English sounds to us today."},
+        {"text": "By ten thousand years, entire nations have risen and vanished, and you have seen more history than humanity has ever written down."},
+        {"text": "Over your full life, you could outlive roughly forty billion human generations, if humans are still around at all."}
+      ]
+    },
+    {
+      "id": "memory",
+      "age": [10000, 40000],
+      "lines": [
+        {"text": "And this is where the first real problem appears. Your brain."},
+        {"text": "The human brain can hold an incredible amount, but it is not infinite."},
+        {"text": "To keep living for a trillion years, you would have to keep forgetting."},
+        {"text": "Your childhood. Your first friend. The face of your mother. Each memory slowly fading, overwritten by the next."},
+        {"text": "After a million years, the person you were at twenty would feel like a total stranger."},
+        {"text": "You would live forever, but you could only ever remember a tiny slice of your own life."}
+      ]
+    },
+    {
+      "id": "stars",
+      "age": [40000, 1000000],
+      "lines": [
+        {"text": "Look up at the night sky. It is changing, too."},
+        {"text": "Every star is moving through the galaxy, and over tens of thousands of years, the constellations slowly warp out of shape."},
+        {"text": "The Big Dipper stretches until it no longer looks like a dipper at all."},
+        {"text": "Down on the ground, Niagara Falls erodes all the way back to Lake Erie and disappears. Ice ages come and go."},
+        {"text": "And sometime in your first hundred thousand years, the red supergiant Betelgeuse will very likely explode."},
+        {"text": "For months, the supernova shines so brightly you can see it in broad daylight. Then it fades, and Orion loses his shoulder forever."}
+      ]
+    },
+    {
+      "id": "drift",
+      "age": [1000000, 250000000],
+      "lines": [
+        {"text": "Now millions of years begin to pass."},
+        {"text": "Humanity, if it survives, may evolve into new species you would barely recognize."},
+        {"text": "Even the ground beneath your feet is moving, a few centimeters every year."},
+        {"text": "Africa pushes into Europe, squeezing the Mediterranean Sea shut and raising a great new mountain range."},
+        {"text": "The Atlantic Ocean widens, and then begins to close."},
+        {"text": "And in about 250 million years, the continents crash back together into one enormous supercontinent. Some scientists call it Pangaea Ultima.", "say": "And in about two hundred and fifty million years, the continents crash back together into one enormous supercontinent. Some scientists call it Pangaea Ultima.", "card": "PANGAEA ULTIMA|+250 million years"}
+      ]
+    },
+    {
+      "id": "galaxy",
+      "age": [250000000, 500000000],
+      "lines": [
+        {"text": "All this time, you have been travelling. Fast."},
+        {"text": "The Sun carries you around the center of the Milky Way at more than 800,000 kilometers per hour.", "say": "The Sun carries you around the center of the Milky Way at more than eight hundred thousand kilometers per hour."},
+        {"text": "One full lap takes about 230 million years. One galactic year.", "say": "One full lap takes about two hundred and thirty million years. One galactic year.", "card": "1 GALACTIC YEAR|≈ 230 million years"},
+        {"text": "The last time Earth was in this part of its orbit, the very first dinosaurs were just appearing."},
+        {"text": "Over your lifetime, you would ride this cosmic carousel more than four thousand times."}
+      ]
+    },
+    {
+      "id": "oceans",
+      "age": [500000000, 1500000000],
+      "lines": [
+        {"text": "But home cannot last forever."},
+        {"text": "The Sun is slowly growing brighter, about ten percent every billion years."},
+        {"text": "Around 600 million years from now, the Moon has drifted so far away that total solar eclipses stop happening, and carbon dioxide drops so low that most plants can no longer survive.", "say": "Around six hundred million years from now, the Moon has drifted so far away that total solar eclipses stop happening, and carbon dioxide drops so low that most plants can no longer survive."},
+        {"text": "And in roughly one billion years, the heat becomes unbearable. The oceans boil away into space."},
+        {"text": "Earth becomes a scorched, lifeless desert."},
+        {"text": "If you want to keep living, you cannot stay here. You need a ship, and a new place to call home."}
+      ]
+    },
+    {
+      "id": "andromeda",
+      "age": [1500000000, 4500000000],
+      "lines": [
+        {"text": "Now look up again. The Andromeda Galaxy is coming closer."},
+        {"text": "Over the next several billion years, it will very likely crash into our Milky Way."},
+        {"text": "But stars are so far apart that almost none of them actually collide."},
+        {"text": "Instead, the two galaxies pass through each other, pulling out long streams of stars, then fall back together again in a slow dance lasting billions of years."},
+        {"text": "In the end, they become a single giant galaxy. Astronomers have nicknamed it Milkdromeda.", "say": "In the end, they become a single giant galaxy. Astronomers have nicknamed it Milk-dromida.", "card": "MILKDROMEDA"}
+      ]
+    },
+    {
+      "id": "sun",
+      "age": [4500000000, 8000000000],
+      "lines": [
+        {"text": "Meanwhile, your old Sun is dying."},
+        {"text": "In about five billion years, it runs out of hydrogen in its core and begins to swell into a red giant, eventually growing more than two hundred times wider than it is today."},
+        {"text": "Mercury is swallowed. Then Venus."},
+        {"text": "Earth, the planet where you were born, is scorched to bare rock, and is very likely swallowed too."},
+        {"text": "Finally, the Sun puffs off its outer layers into a glowing nebula, and what is left collapses into a white dwarf. A dead star about the size of Earth, slowly cooling for the rest of your life."}
+      ]
+    },
+    {
+      "id": "horizon",
+      "age": [8000000000, 150000000000],
+      "lines": [
+        {"text": "And then, something even stranger happens."},
+        {"text": "The universe is expanding, and that expansion is speeding up."},
+        {"text": "Every distant galaxy is being carried away from us, faster and faster."},
+        {"text": "One by one, they slip beyond the cosmic horizon, and their light can never reach us again."},
+        {"text": "By around 100 billion years, every galaxy outside our own little group has vanished from view.", "say": "By around one hundred billion years, every galaxy outside our own little group has vanished from view."},
+        {"text": "Anyone born in this era would look out at a dark, empty sky, and might never learn that other galaxies ever existed."}
+      ]
+    },
+    {
+      "id": "merge",
+      "age": [150000000000, 800000000000],
+      "lines": [
+        {"text": "Our neighbors, the galaxies of the Local Group, are now all that is left."},
+        {"text": "Over hundreds of billions of years, gravity pulls them all together into one lonely island of stars."},
+        {"text": "The big, bright, blue stars burned out long ago."},
+        {"text": "What remains are red dwarfs. Small, dim, patient stars that can shine for trillions of years."},
+        {"text": "And slowly, the gas needed to build new stars begins to run out. The lights of the universe are starting to dim."}
+      ]
+    },
+    {
+      "id": "trillion",
+      "age": [800000000000, 1000000000000],
+      "lines": [
+        {"text": "And then, finally, you arrive."},
+        {"text": "One trillion years.", "card": "1,000,000,000,000 YEARS"},
+        {"text": "You have outlived the Sun, the Earth, and the sky you were born under."},
+        {"text": "Even the afterglow of the Big Bang has been stretched so thin that it can no longer be detected. The universe holds no trace of how it began."},
+        {"text": "And yet, here is the most incredible part."},
+        {"text": "By cosmic standards, it is still early. Red dwarfs will keep burning for trillions of years more. The universe has barely begun."}
+      ]
+    },
+    {
+      "id": "outro",
+      "age": [1000000000000, 1000000000000],
+      "lines": [
+        {"text": "So, would you want it?"},
+        {"text": "A trillion years of watching everything you love fade away. Of forgetting. Of drifting through an ever darker cosmos."},
+        {"text": "Or is there something precious about a life that ends?"},
+        {"text": "Maybe a sunrise feels beautiful precisely because we only get to see so many of them."},
+        {"text": "You don't have a trillion years."},
+        {"text": "You have right now. Make it count."}
+      ]
+    }
+  ]
+}

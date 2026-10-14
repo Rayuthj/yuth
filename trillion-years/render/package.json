@@ -1,0 +1,13 @@
+{
+  "name": "trillion-years-render",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Three.js scenes and headless frame renderer for 'What If You Lived for 1 Trillion Years?'",
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.1",
+    "three": "0.160.0"
+  }
+}
