@@ -1,6 +1,6 @@
 // Chapter 12 — one trillion years: a cold, red, quiet universe. You, a dim
 // white dwarf that was once the Sun, and a galaxy of red dwarfs.
-import { THREE, nebulaSky, sprite, humanFigure, pulseRing, heartbeat, smooth, ease, rng, gauss, pointsMaterial } from '../lib.js';
+import { THREE, nebulaSky, sprite, humanFigure, pulseRing, heartbeat, smooth, ease, rng, gauss, pointsMaterial, mod } from '../lib.js';
 import { makeGalaxy } from '../galaxyfx.js';
 
 export default function trillion(ctx, info) {
@@ -64,7 +64,7 @@ export default function trillion(ctx, info) {
     const hb = heartbeat(t, 1.6);
     you.material.uniforms.uTime.value = t;
     you.material.uniforms.uPulse.value = hb;
-    const p = ((t % 4.8) / 4.8);
+    const p = mod(t, 4.8) / 4.8;
     ring.scale.setScalar(0.1 + p * 3.5);
     ring.material.opacity = 0.35 * (1 - p) * (1 - p);
     ring.quaternion.copy(camera.quaternion);

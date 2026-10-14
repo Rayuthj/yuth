@@ -22,6 +22,7 @@ export function gauss(r) {
 
 // ---------- easing ----------
 export const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+export const mod = (a, n) => ((a % n) + n) % n;   // always non-negative (scenes see t < 0 during crossfades)
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const smooth = (a, b, x) => {
   const t = clamp((x - a) / (b - a));
@@ -315,7 +316,7 @@ export function pulseRing(color = 0x66ccff) {
 
 // heartbeat envelope: two beats ("lub-dub") per period
 export function heartbeat(t, period = 1.0) {
-  const p = (t % period) / period;
+  const p = mod(t, period) / period;
   const b1 = Math.exp(-Math.pow((p - 0.05) / 0.035, 2));
   const b2 = 0.6 * Math.exp(-Math.pow((p - 0.2) / 0.035, 2));
   return b1 + b2;

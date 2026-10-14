@@ -1,6 +1,6 @@
 // Chapter 3 — the problem of memory: a glowing neural network where memories
 // light up and are overwritten, while named memories dissolve.
-import { THREE, nebulaSky, starField, textSprite, humanFigure, smooth, ease, rng, gauss, pointsMaterial, sprite } from '../lib.js';
+import { THREE, nebulaSky, starField, textSprite, humanFigure, smooth, ease, rng, gauss, pointsMaterial, sprite, mod } from '../lib.js';
 
 export default function memory(ctx, info) {
   const scene = new THREE.Scene();
@@ -99,7 +99,7 @@ export default function memory(ctx, info) {
     const fade = 1 - 0.55 * smooth(info.cue(3), dur, t);
     for (let i = 0; i < NN; i++) {
       const n = nodes[i];
-      const age = (t * speed * n.rate + n.phase) % 1;
+      const age = mod(t * speed * n.rate + n.phase, 1);
       const flash = Math.exp(-age * 7) * fade;
       const base = 0.22 + 0.15 * (1 - age);
       nc[i * 3] = base * 0.45 + flash * 1.3;
@@ -122,9 +122,9 @@ export default function memory(ctx, info) {
     eg.attributes.color.needsUpdate = true;
     for (let i = 0; i < NS; i++) {
       const s = sigs[i];
-      const u = (s.ph + t * s.sp * 0.6) % 1;
+      const u = mod(s.ph + t * s.sp * 0.6, 1);
       const cyc = Math.floor(s.ph + t * s.sp * 0.6);
-      const e = edges[(s.e + cyc * 131) % NE];
+      const e = edges[mod(s.e + cyc * 131, NE)];
       tmp.copy(nodes[e[0]].p).lerp(nodes[e[1]].p, u);
       sp[i * 3] = tmp.x; sp[i * 3 + 1] = tmp.y; sp[i * 3 + 2] = tmp.z;
     }

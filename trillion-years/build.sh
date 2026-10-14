@@ -21,9 +21,13 @@ echo "== 3/4 render frames (1280x720 @ 30fps, two workers)"
 (cd render && node render.mjs --start 9000 --end 18000) &
 wait
 
-echo "== 4/4 encode"
-ffmpeg -y -framerate 30 -i build/frames/frame_%06d.jpg -i build/soundtrack.wav \
-  -c:v libx264 -preset slow -crf 23 -pix_fmt yuv420p -g 120 \
-  -c:a aac -b:a 160k -ar 48000 -movflags +faststart -t 600 \
+echo "== 4/4 encode (two-pass H.264, sized to stay under GitHub's 100 MB limit)"
+ffmpeg -y -loglevel error -i build/soundtrack.wav -af loudnorm=I=-16:TP=-1.5:LRA=11 -ar 48000 build/soundtrack_norm.wav
+X264="-c:v libx264 -preset slower -b:v 1120k -maxrate 3000k -bufsize 6000k -g 300 -keyint_min 30 \
+  -x264-params aq-mode=3:aq-strength=0.9:psy-rd=1.0,0.15:deblock=-1,-1:bframes=5:ref=6 -pix_fmt yuv420p"
+ffmpeg -y -loglevel error -framerate 30 -i build/frames/frame_%06d.jpg $X264 -pass 1 -passlogfile build/x264 -an -f null -
+ffmpeg -y -loglevel error -framerate 30 -i build/frames/frame_%06d.jpg -i build/soundtrack_norm.wav $X264 -pass 2 -passlogfile build/x264 \
+  -c:a aac -b:a 128k -ar 48000 -movflags +faststart -t 600 \
+  -metadata title="What If You Lived for 1 Trillion Years?" \
   What_If_You_Lived_1_Trillion_Years.mp4
 ffprobe -v error -show_entries format=duration,size -of default=nw=1 What_If_You_Lived_1_Trillion_Years.mp4

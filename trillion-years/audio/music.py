@@ -56,27 +56,33 @@ def env_adsr(n, a, r):
 
 
 def pad_chord(notes, dur, bright=1.0):
+    """Spectral pad: every partial is a narrow band of noise-phased energy,
+    built directly in the frequency domain (one inverse FFT per channel).
+    The bandwidth gives a natural chorus/ensemble shimmer."""
     n = int(dur * SR)
     t = np.arange(n, dtype=np.float32) / SR
-    L = np.zeros(n, np.float32)
-    R = np.zeros(n, np.float32)
-    for note in notes:
-        f0 = midi(note)
-        for h in range(1, 7):
-            amp = (1.0 / h ** 1.6) * (bright if h > 2 else 1.0)
-            if f0 * h > 6000:
-                break
-            for det, pan in ((-0.0025, 0.2), (0.0, 0.5), (0.0031, 0.8)):
-                ph = RNG.uniform(0, 2 * np.pi)
-                lfo = 1 + 0.0015 * np.sin(2 * np.pi * RNG.uniform(0.05, 0.15) * t + ph)
-                s = np.sin(2 * np.pi * f0 * h * (1 + det) * t * lfo + ph).astype(np.float32) * amp
-                trem = 0.8 + 0.2 * np.sin(2 * np.pi * RNG.uniform(0.04, 0.1) * t + ph)
-                s *= trem
-                L += s * (1 - pan)
-                R += s * pan
+    freqs = np.fft.rfftfreq(n, 1 / SR)
+    df = freqs[1]
+    chans = []
+    for c in range(2):
+        mag = np.zeros(len(freqs), np.float64)
+        for note in notes:
+            f0 = midi(note)
+            for h in range(1, 10):
+                f = f0 * h
+                if f > 7000:
+                    break
+                amp = (1.0 / h ** 1.5) * (bright if h > 2 else 1.0)
+                bw = 0.6 + f * 0.004
+                lo, hi = int(max(0, (f - 4 * bw) / df)), int(min(len(freqs), (f + 4 * bw) / df + 1))
+                mag[lo:hi] += amp * np.exp(-((freqs[lo:hi] - f) / bw) ** 2)
+        X = mag * np.exp(1j * RNG.uniform(0, 2 * np.pi, len(freqs)))
+        x = np.fft.irfft(X, n).astype(np.float32)
+        x *= 0.25 / (np.std(x) + 1e-9)
+        x *= 0.82 + 0.18 * np.sin(2 * np.pi * RNG.uniform(0.04, 0.09) * t + RNG.uniform(0, 6.3))
+        chans.append(x)
     e = env_adsr(n, min(4.0, dur * 0.35), min(4.0, dur * 0.35))
-    k = 1.0 / (len(notes) * 3)
-    return L * e * k, R * e * k
+    return chans[0] * e, chans[1] * e
 
 
 def bell(f, dur=3.5):
@@ -130,6 +136,14 @@ def reverb(x, seconds=3.2, mix=0.35):
         y = np.fft.irfft(np.fft.rfft(x[c], size) * np.fft.rfft(ir, size), size)[: x.shape[1]]
         out[c] = (1 - mix) * x[c] + mix * y.astype(np.float32) * 0.9
     return out
+
+
+def moving_avg(x, k):
+    c = np.concatenate([[0.0], np.cumsum(x, dtype=np.float64)])
+    h = k // 2
+    i = np.arange(len(x))
+    lo, hi = np.clip(i - h, 0, len(x)), np.clip(i + h + 1, 0, len(x))
+    return ((c[hi] - c[lo]) / (hi - lo)).astype(np.float32)
 
 
 def lowpass(x, hz):
@@ -217,13 +231,13 @@ def main():
     voice, _ = sf.read(nar48, dtype="float32")
     voice = np.pad(voice, (0, max(0, N - len(voice))))[:N]
     win = int(0.05 * SR)
-    rms = np.sqrt(np.convolve(voice ** 2, np.ones(win) / win, mode="same"))
+    rms = np.sqrt(moving_avg(voice ** 2, win))
     active = (rms > 0.01).astype(np.float32)
     # smooth the gate: fast attack, slow release
     k = int(0.6 * SR)
-    gate = np.convolve(active, np.ones(k) / k, mode="same")
+    gate = moving_avg(active, k)
     gate = np.clip(gate * 3, 0, 1)
-    duck = 1.0 - 0.55 * gate
+    duck = 1.0 - 0.75 * gate
     music *= duck
 
     # master: fade in/out, normalize
@@ -232,7 +246,7 @@ def main():
     fade[:fi] = np.linspace(0, 1, fi)
     fade[-fo:] = np.linspace(1, 0, fo) ** 1.5
     music *= fade
-    music *= 0.32 / (np.percentile(np.abs(music), 99.9) + 1e-9)
+    music *= 0.16 / (np.percentile(np.abs(music), 99.9) + 1e-9)
     mix = music + voice[None, :] * 0.92
     peak = np.max(np.abs(mix))
     if peak > 0.97:

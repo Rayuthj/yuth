@@ -1,5 +1,5 @@
 // Chapter 0 — a single glowing human floating in space, heart beating.
-import { THREE, starField, nebulaSky, humanFigure, pulseRing, heartbeat, sprite, glowTexture, smooth, ease, rng, gauss } from '../lib.js';
+import { THREE, starField, nebulaSky, humanFigure, pulseRing, heartbeat, sprite, glowTexture, smooth, ease, rng, gauss, mod } from '../lib.js';
 
 export default function intro(ctx) {
   const scene = new THREE.Scene();
@@ -55,7 +55,7 @@ export default function intro(ctx) {
     heart.material.opacity = 0.35 + 0.65 * hb;
     heart.scale.setScalar(0.12 + 0.12 * hb);
     rings.forEach((ring, i) => {
-      const p = ((t + i * 1.05) % 4.2) / 4.2;
+      const p = mod(t + i * 1.05, 4.2) / 4.2;
       ring.scale.setScalar(0.1 + p * 3.0);
       ring.material.opacity = 0.5 * (1 - p) * (1 - p);
       ring.quaternion.copy(camera.quaternion);
