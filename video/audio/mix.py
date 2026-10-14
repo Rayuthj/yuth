@@ -25,7 +25,7 @@ BUILD = os.path.join(ROOT, "build")
 
 VOICE_RMS = 0.085        # target RMS per narration line
 SFX_MASTER = 0.55        # overall level of sound effects relative to their own peak (0.8)
-DUCK_DB = 7.0            # music reduction while someone is speaking
+DUCK_DB = 9.0            # music reduction while someone is speaking
 
 
 def place(buf, x, at, gain=1.0):
@@ -131,7 +131,7 @@ def loudnorm(src, dst, I=-14.0, TP=-1.5, LRA=11.0):
           f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:"
           f"linear=true,aresample=48000")
     subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", src, "-af", af, "-c:a", "aac",
-                    "-b:a", "192k", "-ar", "48000", dst], check=True)
+                    "-b:a", "160k", "-ar", "48000", dst], check=True)
     print("loudness before:", m["input_i"], "LUFS ->", I, flush=True)
     return dst
 

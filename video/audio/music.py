@@ -376,6 +376,6 @@ def chapter_music(ch, tl, seed=0):
     L, R = L[:n], R[:n]
     # loudness normalization per chapter (RMS of the active part)
     rms = np.sqrt(np.mean(np.concatenate([L, R]) ** 2) + 1e-12)
-    target = {6: 0.045, 10: 0.045}.get(ch, 0.055)
+    target = {6: 0.036, 10: 0.036}.get(ch, 0.042)
     g = target / rms
     return (L * g).astype(np.float32), (R * g).astype(np.float32)

@@ -1,7 +1,12 @@
 # What If You Had 500 IQ? — 10-minute 2D stickman video
 
 **Final video:** [`output/what_if_you_had_500_iq.mp4`](output/what_if_you_had_500_iq.mp4)
-(1920×1080, 16:9, 30 fps, H.264 + AAC stereo, exactly 10:00)
+(1920×1080, 16:9, 30 fps, 18,000 frames, H.264 + AAC 48 kHz stereo, exactly 10:00, ~95 MiB)
+
+Other deliverables in `output/`:
+- `what_if_you_had_500_iq.srt`: subtitles timed from the narration (112 cues)
+- `narration_script.md`: the full narration (1,405 words) with timestamps
+- `preview_frames_1.jpg`, `preview_frames_2.jpg`: 40 frames sampled from the final MP4 (4 per chapter)
 
 Everything in the film is generated from code in this repository: the animation, narration,
 music and sound effects. It uses no stock footage, stock audio or image assets.
