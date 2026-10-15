@@ -83,6 +83,8 @@ def ein(t):
 
 def back(t, s=1.70158):
     t = clamp(t)
+    if t <= 0.0:
+        return 0.0          # exact zero: float rounding would otherwise leave a tiny positive scale (a stray dot)
     return 1 + (s + 1) * (t - 1) ** 3 + s * (t - 1) ** 2
 
 

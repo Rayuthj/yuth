@@ -121,6 +121,22 @@ def build(tl):
         k = ease(prog(t, 0.2, 1.4))
         z = lerp(1.0, 1.0, k)
         with camera(cr, z, CX, CY):
+            t_far, t_fam = w("c5_06b", "farmer"), w("c5_06b", "real family")
+            k0 = 1 - clamp(prog(T, t_far - 0.35, 0.3))
+            if k0 > 0:
+                with group(cr, k0):
+                    for j, (num, lab, y) in enumerate((("-4,000", "JOBS", 330), ("-30%", "HARVEST", 520))):
+                        kn = eout(prog(T, st6b + 0.15 + j * 0.3, 0.4))
+                        text(cr, num, CX - 40, y, 120, face=FONT_TITLE, c=RED, align="right", a=kn)
+                        text(cr, lab, CX + 10, y, 80, face=FONT_TITLE, c=GRAY, align="left", a=kn)
+                    kf = K.pop(T, t_fam)
+                    if kf > 0:
+                        with xform(cr, CX, 900, max(0.01, kf)):
+                            for j, (dx, s_, a2) in enumerate(((-90, 0.75, ("hat",)), (30, 0.65, ("ponytail",)),
+                                                              (120, 0.42, ("cap",)))):
+                                p = sm.pose("front", x=dx, s=s_, smile=-0.1, brow=-0.3)
+                                sm.draw(cr, sm.on_ground(sm.idle(p, T, j), 60), acc=a2)
+                        text(cr, "= A REAL FAMILY", CX, 1010, 44, face=FONT_TITLE, a=clamp(kf))
             for i, (lab, x, acc, bgc) in enumerate((("A FARMER", 520, ("hat",), (1.0, 0.85, 0.6)),
                                                     ("A WORKER", 1400, ("hardhat",), (0.75, 0.80, 0.90)))):
                 kk = K.pop(T, w("c5_06b", ["farmer", "worker"][i]))
@@ -136,6 +152,7 @@ def build(tl):
             text(cr, "BEHIND EVERY NUMBER", CX, 110, 56, face=FONT_TITLE, a=eout(prog(t, 0.1, 0.4)))
     b.fx(w("c5_06b", "farmer"), "pop", -10)
     b.fx(w("c5_06b", "worker"), "pop", -10)
+    b.fx(w("c5_06b", "real family"), "pop", -14)
 
     # 7. up all night
     st7 = s("c5_07") - 0.15
