@@ -9,6 +9,8 @@ Other deliverables in `output/`:
 - `preview_frames_1.jpg`, `preview_frames_2.jpg`: 40 frames sampled from the final MP4 (4 per chapter)
 - `thumbnail.png` (1280×720) plus two alternates in `thumbnails/`, made by `video/thumbnail.py`
 - `youtube_metadata.md`: title options, description with chapter timestamps, tags and upload settings
+- `short_what_if_you_had_500_iq.mp4`: a vertical 1080×1920 Short (43.5 s) built from the hook, with
+  word-highlighted captions and an end card pointing to the full video (`video/short.py`)
 
 Everything in the film is generated from code in this repository: the animation, narration,
 music and sound effects. It uses no stock footage, stock audio or image assets.

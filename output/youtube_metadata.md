@@ -56,3 +56,24 @@ what if you had 500 iq, 500 iq, what if, iq, high iq, intelligence, genius, smar
 - Captions: upload `output/what_if_you_had_500_iq.srt` (English).
 - Chapters: the timestamps in the description create YouTube chapters automatically.
 - Category: Education. Audience: not made for kids (general audience, teens and up).
+
+## Short (vertical teaser)
+
+File: `output/short_what_if_you_had_500_iq.mp4` (1080×1920, 43.5 s, built by `video/short.py` from the hook)
+
+Title:
+```
+What If You Had 500 IQ? #shorts
+```
+
+Description:
+```
+Imagine waking up tomorrow with a 500 IQ. Would you be the smartest person alive... or your own biggest problem?
+
+Full 10-minute animated video on the channel.
+
+#shorts #WhatIf #IQ
+```
+
+When the full video is public, open the Short in YouTube Studio and set the full video as its
+**Related video**. That adds a tappable link from the Short to the long video.
