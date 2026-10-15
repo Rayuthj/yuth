@@ -32,6 +32,15 @@ class Builder:
             return fn
         return deco
 
+    def add(self, start, fn, trans="cut", tdur=0.5, name=""):
+        """Register a ready-made draw function fn(cr, t, d, T) (e.g. from video.engine.kit)."""
+        st = start
+
+        def draw(cr, t, d, fn=fn, st=st):
+            fn(cr, t, d, st + t)
+        self.shots.append(Shot(st, draw, trans, tdur, name or getattr(fn, "__name__", "")))
+        return fn
+
     def fx(self, T, name, gain=0.0, **kw):
         self.sfx.append((round(T, 3), name, gain, kw))
 

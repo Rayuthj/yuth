@@ -13,8 +13,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-BUILD = os.path.join(ROOT, "build")
-OUT = os.path.join(ROOT, "output", "what_if_you_had_500_iq.mp4")
+from video import project as PROJECT  # noqa: E402
 
 
 def run(cmd):
@@ -23,7 +22,8 @@ def run(cmd):
 
 
 def assemble():
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    P = PROJECT.get()
+    BUILD, OUT = P.build, P.video
     lst = os.path.join(BUILD, "chapters.txt")
     with open(lst, "w") as f:
         for ch in range(1, 11):
@@ -34,7 +34,7 @@ def assemble():
     run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", video, "-i",
          os.path.join(BUILD, "soundtrack.m4a"), "-map", "0:v:0", "-map", "1:a:0", "-c", "copy",
          "-t", "600", "-movflags", "+faststart",
-         "-metadata", "title=What If You Had 500 IQ?", OUT])
+         "-metadata", f"title={P.title}", OUT])
     return OUT
 
 
@@ -73,6 +73,7 @@ def validate(path):
 
 
 def main():
+    PROJECT.pop_project_arg(sys.argv)
     ap = argparse.ArgumentParser()
     ap.add_argument("--assemble", action="store_true")
     ap.add_argument("-j", type=int, default=4)
@@ -81,6 +82,7 @@ def main():
         from video import timeline
         timeline.build()
         run([sys.executable, os.path.join(ROOT, "video", "audio", "mix.py")])
+        run([sys.executable, os.path.join(ROOT, "video", "captions.py")])
         run([sys.executable, os.path.join(ROOT, "video", "render.py"), "all", "-j", str(a.j)])
     out = assemble()
     ok = validate(out)

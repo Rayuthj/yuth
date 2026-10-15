@@ -17,10 +17,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from video.engine.core import W, H, FPS, new_surface, new_ctx  # noqa: E402
 from video.engine.scene import TL, finalize, draw_frame, chapter_tag  # noqa: E402
 from video import timeline as timeline_mod  # noqa: E402
+from video import project as PROJECT  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BUILD = os.path.join(ROOT, "build")
-PREVIEW = os.path.join(BUILD, "preview")
+
+
+def BUILD():
+    return PROJECT.get().build
+
+
+def PREVIEW():
+    d = os.path.join(PROJECT.get().build, "preview")
+    os.makedirs(d, exist_ok=True)
+    return d
 
 X264 = ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-tune", "animation",
         "-pix_fmt", "yuv420p", "-g", "60", "-r", str(FPS)]
@@ -29,7 +38,7 @@ X264 = ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-tune", "animatio
 def load_chapter(ch, tl_all=None):
     tl_all = tl_all or timeline_mod.load()
     tl = TL(tl_all[str(ch)])
-    mod = importlib.import_module(f"video.chapters.ch{ch:02d}")
+    mod = PROJECT.get().chapter(ch)
     shots, sfx = mod.build(tl)
     shots = finalize(shots, tl.dur)
     overlay = None
@@ -41,7 +50,7 @@ def load_chapter(ch, tl_all=None):
 def render_chapter(ch, out=None):
     tl, shots, _, overlay = load_chapter(ch)
     n = int(round(tl.dur * FPS))
-    out = out or os.path.join(BUILD, f"ch{ch:02d}.mp4")
+    out = out or os.path.join(BUILD(), f"ch{ch:02d}.mp4")
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgr0",
            "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-", *X264, "-threads", "3", out]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
@@ -93,12 +102,13 @@ def sheet(ch, times=None, cols=4, rows=4, path=None):
         d.rectangle([0, 0, 70, 22], fill="black")
         d.text((4, 4), f"{T:5.1f}s", fill="white")
         out.paste(im, ((i % cols) * tw, (i // cols) * th))
-    path = path or os.path.join(PREVIEW, f"sheet_ch{ch:02d}.png")
+    path = path or os.path.join(PREVIEW(), f"sheet_ch{ch:02d}.png")
     out.save(path)
     return path
 
 
 def main():
+    PROJECT.pop_project_arg(sys.argv)
     ap = argparse.ArgumentParser()
     ap.add_argument("chapters", nargs="+")
     ap.add_argument("-j", type=int, default=1)
@@ -107,7 +117,6 @@ def main():
     ap.add_argument("--to", dest="t_to", type=float)
     ap.add_argument("--at", nargs="*", type=float)
     a = ap.parse_args()
-    os.makedirs(PREVIEW, exist_ok=True)
     chs = list(range(1, 11)) if a.chapters == ["all"] else [int(c) for c in a.chapters]
     if a.sheet:
         for ch in chs:
@@ -120,7 +129,7 @@ def main():
     if a.at:
         loaded = load_chapter(chs[0])
         for T in a.at:
-            print(frame_png(chs[0], T, os.path.join(PREVIEW, f"ch{chs[0]:02d}_{T:06.2f}.png"), loaded))
+            print(frame_png(chs[0], T, os.path.join(PREVIEW(), f"ch{chs[0]:02d}_{T:06.2f}.png"), loaded))
         return
     if a.j > 1:
         with ProcessPoolExecutor(a.j) as ex:

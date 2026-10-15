@@ -18,10 +18,8 @@ import numpy as np
 import soundfile as sf
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from video.script import BEATS, CHAPTER_SLOTS, CHAPTER_TIMING  # noqa: E402
 from video import tts  # noqa: E402
-
-TIMELINE = os.path.join(tts.BUILD, "timeline.json")
+from video import project as PROJECT  # noqa: E402
 
 TARGET_GAP = {1: 0.20, 2: 0.70, 3: 0.70, 4: 0.75, 5: 0.65, 6: 0.95, 7: 0.70, 8: 0.70, 9: 0.75, 10: 0.45}
 SPEED_RANGE = (0.88, 1.22)
@@ -29,13 +27,15 @@ MIN_GAP = 0.12
 
 
 def fit_chapter(ch):
-    _, title, start, end = next(c for c in CHAPTER_SLOTS if c[0] == ch)
-    lead, tail = CHAPTER_TIMING[ch]["lead"], CHAPTER_TIMING[ch]["tail"]
-    beats = BEATS[ch]
+    S = PROJECT.get().script
+    _, title, start, end = next(c for c in S.CHAPTER_SLOTS if c[0] == ch)
+    lead, tail = S.CHAPTER_TIMING[ch]["lead"], S.CHAPTER_TIMING[ch]["tail"]
+    beats = S.BEATS[ch]
+    target_gap = getattr(S, "TARGET_GAP", TARGET_GAP)
     avail = (end - start) - lead - tail
     n_gaps = len(beats) - 1
 
-    speech_target = avail - n_gaps * TARGET_GAP[ch]
+    speech_target = avail - n_gaps * target_gap[ch]
     speed = 1.0
     res = tts.synth_chapter(ch, speed)
     speech = sum(v["dur"] for v in res.values())
@@ -83,11 +83,12 @@ def envelope(path, fps=30):
 
 
 def build(chs=None):
+    TIMELINE = PROJECT.get().timeline
     tl = {}
     if os.path.exists(TIMELINE):
         with open(TIMELINE) as f:
             tl = json.load(f)
-    for ch in chs or sorted(BEATS):
+    for ch in chs or sorted(PROJECT.get().script.BEATS):
         data = fit_chapter(ch)
         for b in data["beats"]:
             b["env"] = envelope(b["path"])
@@ -98,9 +99,10 @@ def build(chs=None):
 
 
 def load():
-    with open(TIMELINE) as f:
+    with open(PROJECT.get().timeline) as f:
         return json.load(f)
 
 
 if __name__ == "__main__":
+    PROJECT.pop_project_arg(sys.argv)
     build([int(a) for a in sys.argv[1:]] or None)

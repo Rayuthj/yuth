@@ -16,7 +16,7 @@ import numpy as np
 import soundfile as sf
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from video.script import BEATS, VOICES  # noqa: E402
+from video import project as PROJECT  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD = os.path.join(ROOT, "build")
@@ -60,7 +60,7 @@ def trim(sig, thresh_db=-42.0, pad=0.035):
 
 
 def synth(text, voice_key, speed):
-    voice = VOICES[voice_key]
+    voice = PROJECT.get().script.VOICES[voice_key]
     os.makedirs(TTS_DIR, exist_ok=True)
     path = os.path.join(TTS_DIR, beat_key(text, voice, speed) + ".wav")
     if not os.path.exists(path):
@@ -75,7 +75,7 @@ def synth(text, voice_key, speed):
 def synth_chapter(ch, speed):
     """Synthesize every beat of a chapter; returns {beat_id: {path, dur, ...}}."""
     out = {}
-    for b in BEATS[ch]:
+    for b in PROJECT.get().script.BEATS[ch]:
         # Character dialogue keeps a natural pace regardless of narrator speed.
         sp = speed if b["voice"] == "narrator" else min(speed, 1.05)
         path, dur = synth(b["text"], b["voice"], round(sp, 3))
@@ -85,7 +85,8 @@ def synth_chapter(ch, speed):
 
 
 if __name__ == "__main__":
-    chs = [int(a) for a in sys.argv[1:]] or sorted(BEATS)
+    PROJECT.pop_project_arg(sys.argv)
+    chs = [int(a) for a in sys.argv[1:]] or sorted(PROJECT.get().script.BEATS)
     res = {}
     for ch in chs:
         print("chapter", ch)

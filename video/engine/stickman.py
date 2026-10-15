@@ -228,6 +228,8 @@ def draw(cr, p, ink=INK, fill=WHITE, acc=("tuft",), alpha=1.0, feet=True, item=N
         if glow_c is not None:
             from .core import glow
             glow(cr, J["head"][0], (J["head"][1] + J["hip"][1]) / 2, 260 * s, glow_c, 0.35)
+        if "cape" in acc:
+            _cape(cr, J, p, ink)
         if "labcoat" in acc:
             _labcoat(cr, J, p, ink)
         if "ponytail" in acc:
@@ -245,6 +247,8 @@ def draw(cr, p, ink=INK, fill=WHITE, acc=("tuft",), alpha=1.0, feet=True, item=N
             _tie(cr, J, p)
         if "badge" in acc:
             _badge(cr, J, p)
+        if "bowtie" in acc:
+            _bowtie(cr, J, p)
         limb(J["hip"], J["knee_f"], J["foot_f"])
         if feet:
             _foot(cr, J, "f", s, lw, ink)
@@ -353,6 +357,26 @@ def _head(cr, J, p, ink, fill, acc, lw, face_only=False):
         circle(cr, *_rot(hc, ang, -r * 0.95 * f, 0), r * 0.25, fill=ink)
     if "ponytail" in acc:
         _ponytail(cr, J, p, ink, back=False)
+    if "bearskin" in acc:
+        pts = [_rot(hc, ang, dx * s, dy * s) for dx, dy in
+               [(-36, -18), (-42, -70), (-30, -110), (0, -122), (30, -110), (42, -70), (36, -18)]]
+        polyline(cr, bezier_pts(pts, 20), lw * 0.4, ink, closed=True, fill=ink)
+    if "chef" in acc:
+        base = [_rot(hc, ang, dx * s, dy * s) for dx, dy in [(-30, -30), (30, -30), (30, -52), (-30, -52)]]
+        polyline(cr, base, lw * 0.4, ink, closed=True, fill=WHITE)
+        for dx in (-22, 0, 22):
+            circle(cr, *_rot(hc, ang, dx * s, -70 * s), 22 * s, fill=WHITE, stroke=ink, w=lw * 0.4)
+        polyline(cr, base, 0, ink, closed=True, fill=WHITE)
+    if "hat" in acc:
+        b1 = _rot(hc, ang, -r * 1.25, -r * 0.55)
+        b2 = _rot(hc, ang, r * 1.25, -r * 0.55)
+        line(cr, b1[0], b1[1], b2[0], b2[1], lw * 1.1, ink)
+        pts = [_rot(hc, ang, dx * s, dy * s) for dx, dy in [(-26, -24), (-22, -62), (22, -62), (26, -24)]]
+        polyline(cr, pts, lw * 0.4, ink, closed=True, fill=ink)
+    if "beard" in acc:
+        pts = [_rot(hc, ang, dx * s * (1 if f > 0 else 1), dy * s) for dx, dy in
+               [(-30, 12), (-24, 40), (0, 58), (24, 40), (30, 12), (14, 26), (0, 30), (-14, 26)]]
+        polyline(cr, pts, lw * 0.3, ink, closed=True, fill=(0.85, 0.85, 0.85))
     if "mustache" in acc:
         c = _rot(hc, ang, mx, my - 5 * s)
         ellipse(cr, c[0] - 6 * s, c[1], 7 * s, 3 * s, fill=ink, rot=ang + 0.2)
@@ -411,6 +435,27 @@ def _badge(cr, J, p):
     rrect(cr, x - 13 * s, y - 13 * s, 26 * s, 26 * s, 5 * s, fill=WHITE, stroke=INK, lw=2.5 * s)
     line(cr, x, y - 8 * s, x, y + 8 * s, 5 * s, RED)
     line(cr, x - 8 * s, y, x + 8 * s, y, 5 * s, RED)
+
+
+def _cape(cr, J, p, ink):
+    from .core import RED as _RED
+    s = p["s"]
+    nx, ny = J["neck"]
+    hx, hy = J["hip"]
+    f = p["face"]
+    sway = 10 * s * math.sin(p.get("x", 0) * 0.01)
+    pts = [(nx - 18 * s * f, ny + 6 * s), (nx + 10 * s * f, ny + 6 * s), (hx - 30 * s * f + sway, hy + 110 * s),
+           (hx - 95 * s * f + sway, hy + 100 * s)]
+    polyline(cr, pts, 3.5 * s, ink, closed=True, fill=(0.72, 0.08, 0.12))
+    line(cr, nx - 24 * s, ny + 6 * s, nx + 24 * s, ny + 6 * s, 9 * s, YELLOW)
+
+
+def _bowtie(cr, J, p):
+    s = p["s"]
+    nx, ny = J["neck"]
+    x, y = nx, ny + 10 * s
+    polyline(cr, [(x, y), (x - 14 * s, y - 8 * s), (x - 14 * s, y + 8 * s)], 2.5 * s, INK, closed=True, fill=RED)
+    polyline(cr, [(x, y), (x + 14 * s, y - 8 * s), (x + 14 * s, y + 8 * s)], 2.5 * s, INK, closed=True, fill=RED)
 
 
 def _labcoat(cr, J, p, ink):

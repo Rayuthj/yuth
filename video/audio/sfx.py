@@ -885,8 +885,61 @@ def fx_soft_x(dur, s):
     return sweep(330, 200, d) * expdec(d, 10) * 0.3
 
 
+def fx_camera(dur, s):
+    d = 0.18
+    x = click(0.006, s, 1500, 9000) * 0.9
+    x = np.pad(x, (0, int(d * SR) - len(x)))
+    place(x, click(0.01, s + 1, 800, 5000) * 0.6, 0.06)
+    place(x, hp(noise(0.08, s + 2), 3000) * expdec(0.08, 40) * 0.3, 0.02)
+    return x
+
+
+def fx_cheer(dur, s):
+    d = dur or 2.5
+    t = T(d)
+    x = bp(noise(d, s), 300, 3000) * (0.5 + 0.5 * np.abs(np.sin(2 * np.pi * 5.3 * t) * np.sin(2 * np.pi * 1.1 * t)))
+    r = rng(s)
+    for i in range(int(d * 6)):
+        f0 = r.uniform(500, 1100)
+        place(x, sweep(f0, f0 * 1.5, 0.18) * np.sin(np.pi * T(0.18) / 0.18) * 0.15, r.uniform(0, d - 0.2))
+    return fade(x * 0.6, 0.15, 0.6)
+
+
+def fx_applause(dur, s):
+    d = dur or 2.5
+    r = rng(s)
+    out = np.zeros(int(d * SR))
+    for i in range(int(d * 60)):
+        place(out, bp(noise(0.02, s + i), 1000, 6000) * expdec(0.02, 150) * r.uniform(0.2, 0.6), r.uniform(0, d - 0.03))
+    return fade(out, 0.2, 0.6)
+
+
+def fx_coins(dur, s):
+    d = dur or 1.0
+    r = rng(s)
+    out = np.zeros(int(d * SR))
+    for i in range(int(d * 14)):
+        place(out, bell(r.uniform(2500, 4500), 0.25, rate=16) * r.uniform(0.15, 0.35), r.uniform(0, d - 0.25))
+    return out
+
+
+def fx_swish(dur, s):
+    return fx_whoosh(0.4, s, lo=1200, hi=5000) * 0.9
+
+
 def fx_hit(dur, s):
     return fx_thud(dur, s)
+
+
+def fx_flutter(dur, s):
+    """Wing flaps: a burst of short band-passed noise puffs."""
+    d = dur or 0.9
+    n = noise(d, s)
+    t = T(d)
+    rate = 14.0
+    puffs = np.clip(np.sin(2 * np.pi * rate * t), 0, 1) ** 6
+    env = np.clip(1 - t / d, 0, 1) ** 0.7
+    return bp(n, 500, 2400) * puffs * env
 
 
 REGISTRY = {k[3:]: v for k, v in globals().items() if k.startswith("fx_") and callable(v) and k != "fx_kick"}

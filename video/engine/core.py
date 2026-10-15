@@ -207,12 +207,12 @@ def fill_bg(cr, c):
     cr.paint()
 
 
-def vgrad(cr, top, bottom, x0=0, y0=0, x1=W, y1=H):
+def vgrad(cr, top, bottom, x0=0, y0=0, x1=W, y1=H, pad=0):
     g = cairo.LinearGradient(0, y0, 0, y1)
     g.add_color_stop_rgb(0, *top[:3])
     g.add_color_stop_rgb(1, *bottom[:3])
     cr.set_source(g)
-    cr.rectangle(x0, y0, x1 - x0, y1 - y0)
+    cr.rectangle(x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad)
     cr.fill()
 
 
@@ -253,6 +253,7 @@ def glow(cr, x, y, r, c, a=0.6):
     g.add_color_stop_rgba(0.4, *c[:3], a * 0.35)
     g.add_color_stop_rgba(1, *c[:3], 0)
     cr.set_source(g)
+    cr.new_path()
     cr.arc(x, y, r, 0, TAU)
     cr.fill()
 
@@ -360,6 +361,7 @@ def arc(cr, x, y, r, a1, a2, w=6, c=INK, a=1.0):
 def ellipse(cr, x, y, rx, ry, fill=None, stroke=None, w=5, a=1.0, rot=0.0):
     if rx <= 0 or ry <= 0:
         return
+    cr.new_path()
     cr.save()
     cr.translate(x, y)
     if rot:
@@ -520,6 +522,7 @@ def text(cr, s, x, y, size=40, c=INK, a=1.0, face=FONT_UI, align="center",
     else:
         src(cr, c, a)
         cr.show_text(s)
+    cr.new_path()
     cr.restore()
     return xa
 

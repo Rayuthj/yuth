@@ -18,10 +18,10 @@ sys.path.insert(0, ROOT)
 from video.audio import sfx as SFX  # noqa: E402
 from video.audio import music as MUSIC  # noqa: E402
 from video.engine.scene import TL  # noqa: E402
+from video import project as PROJECT  # noqa: E402
 
 SR = 48000
 TOTAL = 600.0
-BUILD = os.path.join(ROOT, "build")
 
 VOICE_RMS = 0.085        # target RMS per narration line
 SFX_MASTER = 0.55        # overall level of sound effects relative to their own peak (0.8)
@@ -69,7 +69,8 @@ def envelope(x, attack=0.03, release=0.35, hop=0.01):
 
 
 def build():
-    tl_all = json.load(open(os.path.join(BUILD, "timeline.json")))
+    BUILD = PROJECT.get().build
+    tl_all = json.load(open(PROJECT.get().timeline))
     N = int(TOTAL * SR)
     voice = np.zeros(N)
     fx = np.zeros((2, N))
@@ -83,7 +84,7 @@ def build():
         for b in data["beats"]:
             place(voice, load_voice(b["path"]), t0 + b["start"])
         # sound effects
-        mod = importlib.import_module(f"video.chapters.ch{ch:02d}")
+        mod = PROJECT.get().chapter(ch)
         _, cue_list = mod.build(tl)
         for (T, name, gain, kw) in cue_list:
             seed = zlib.crc32(f"{ch}:{T}:{name}".encode()) & 0xFFFF
@@ -94,7 +95,7 @@ def build():
             place(fx, st, t0 + T, g)
             cues.append((round(t0 + T, 2), name))
         # music, with a master fade across the chapter boundary
-        L, R = MUSIC.chapter_music(ch, tl, seed=ch * 101)
+        L, R = MUSIC.chapter_music(ch, tl, seed=ch * 101, mod=mod)
         D = tl.dur
         tt = np.arange(len(L)) / SR
         g = np.clip((D + 1.5 - tt) / 1.7, 0, 1)
@@ -137,5 +138,6 @@ def loudnorm(src, dst, I=-14.0, TP=-1.5, LRA=11.0):
 
 
 if __name__ == "__main__":
+    PROJECT.pop_project_arg(sys.argv)
     wav = build()
-    loudnorm(wav, os.path.join(BUILD, "soundtrack.m4a"))
+    loudnorm(wav, os.path.join(PROJECT.get().build, "soundtrack.m4a"))

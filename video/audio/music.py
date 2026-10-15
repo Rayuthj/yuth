@@ -366,10 +366,12 @@ def plan(ch, tl):
     raise ValueError(ch)
 
 
-def chapter_music(ch, tl, seed=0):
+def chapter_music(ch, tl, seed=0, mod=None):
+    """Score a chapter. A chapter module may define music_plan(tl) to override the legacy plan."""
     D = tl.dur
     bus = Bus(D + 3)
-    for i, (t0, t1, style, prog, bpm, inten, fi, fo) in enumerate(plan(ch, tl)):
+    sections = mod.music_plan(tl) if mod is not None and hasattr(mod, "music_plan") else plan(ch, tl)
+    for i, (t0, t1, style, prog, bpm, inten, fi, fo) in enumerate(sections):
         render_section(bus, max(0.0, t0), min(t1, D + 2.0), style, prog, bpm, inten, seed + i * 17, fi, fo)
     L, R = apply_reverb(bus.L, bus.R)
     n = int((D + 1.5) * SR)
